@@ -1,4 +1,12 @@
-const products = JSON.parse(localStorage.getItem("products"));
+const storeProducts = (products) => {
+  localStorage.setItem("products", JSON.stringify(products));
+};
+// Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
+const getProducts = () => {
+  return JSON.parse(localStorage.getItem("products") || "[]");
+};
+
+let products = getProducts();
 
 async function getOneProduct(id) {
   const response = await fetch("http://localhost:3000/api/products/" + id);
@@ -22,9 +30,9 @@ async function displayInfo() {
 
     //creation de la balise article
     let article = document.createElement("article");
-    article.classList.add("cart_item");
-    article.dataset.id;
-    article.dataset.color;
+    article.classList.add("cart__item");
+    article.dataset.id = product._id;
+
     article.innerHTML = `
     <div class="cart__item__img">
       <img src="${productInfo.imageUrl}" alt="Photographie d'un canapé">
@@ -50,6 +58,9 @@ async function displayInfo() {
   }
   //ajout du fragment sur la page
   cartItems.appendChild(fragment);
+  getTotal();
+  modifyQtt();
+  deleteItem();
 }
 
 function getTotal() {
@@ -59,74 +70,52 @@ function getTotal() {
   );
   //addition des prix
   let total = 0;
+  let totalQtt = 0;
   prices.forEach((e) => {
     //Le slice supprime l'espace vide et le symbole euro, et le number() va parser mes deux prix
-    total += Number(e.innerHTML.slice(0, -2));
+    prix = parseInt(e.textContent);
+    article = e.closest("article");
+    qteInput = article.querySelector(".itemQuantity");
+    const qteInputValue = qteInput.value || 0;
+    total += prix * qteInputValue;
+    totalQtt += parseInt(qteInputValue);
   });
-  console.log(total);
   //ajout prix total dans le DOM
   const totalPrices = document.getElementById("totalPrice");
   totalPrices.innerHTML = total;
-
-  //Get la balise input quantités
-  const quantity = document.querySelectorAll(
-    ".cart__item__content__settings__quantity input:nth-child(2)"
-  );
-  //addition des quantités
-  let totalQtt = 0;
-  quantity.forEach((e) => {
-    totalQtt += Number(e.value);
-  });
-  console.log(totalQtt);
   //ajout quantité totale dans le DOM
   const totalQuantity = document.getElementById("totalQuantity");
   totalQuantity.innerHTML = totalQtt;
 }
-
-async function main() {
-  //await car sinon il va lire getTotal avant d'avoir fini la lecture de displayInfo
-  await displayInfo();
-  getTotal();
+//fonction qui modifie la quantité et le prix total quand l'utilisateur modifie la quantité
+function modifyQtt() {
+  const quantityInputs = document.querySelectorAll(".itemQuantity");
+  quantityInputs.forEach((input) => {
+    input.addEventListener("input", getTotal);
+  });
 }
 
-main();
+function deleteItem() {
+  const deleteButtons = document.querySelectorAll(".deleteItem");
 
-///
-//probleme : il n'additionne pas le prix lorsque meme canapé en plusieurs quantités
-///
-/*
-products.forEach((product) => {
-  //console.log("stored product", product);
+  deleteButtons.forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const cartItem =
+        button.parentElement.parentElement.parentElement.parentElement;
+      const productId = cartItem.dataset.id;
+      // TODO HERE: remove the related product in the localstorage
+      products = products.filter((prod) => prod._id !== productId);
+      // peopleMajorOnly = people.filter((p) => p.age > 18);
 
-  let cartItems = document.getElementById("cart__items");
-  let article = document.createElement("article");
-  article.data.{nom de data}
-  article.innerHTML = `<article class="cart__item" data-id="${product._id}" data-color="${product.color}"> 
-  <div class="cart__item__img"><img src="" alt=""></div> <div class="cart__item__content">
-  <div class="cart__item__content__description">
- <h2>${product.name}</h2>
-    <p>${product.color}</p>
-    <p>${product.price}</p>
-  </div>
-  <div class="cart__item__content__settings">
-    <div class="cart__item__content__settings__quantity">
-      <p>Qté : </p>
-      <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.quantity}">
-    </div>
-    <div class="cart__item__content__settings__delete">
-      <p class="deleteItem">Supprimer</p>
-    </div>
-  </div>
-</div>`;
-  cartItems.appendChild(article);
-});
-*/
+      //Utilisation de la methode remove()
+      cartItem.remove();
+      //mettre a jour prix et quantité total en appelant la fonction getTotal
+      getTotal();
+      event.preventDefault();
+    });
+  });
+}
 
-// console.log(product.color); //appel couleur par local storage
-//console.log(productInfo.price); //appel prix par l'api
-// création de l'article
-//paramettrage de l'article
-//innerHTML
-//ajout de l'article dans le fragment
+displayInfo();
 
-//etape 8 = ne pas oublier de faire une fonction pour le prix total.
+//etape 10 : addeventlistiner sur bouton ne pas oublier le preventdefault !
