@@ -113,7 +113,7 @@ addToCart.addEventListener("click", (event) => {
   //parseInt = converti un string en chiffre (si possible)
   const itemsQuantity = parseInt(document.getElementById("quantity").value);
   if (itemsQuantity > 0 && itemsQuantity < 101) {
-    console.log("qte correct");
+    alert("Le produit a bien été ajouté au panier");
   } else {
     return alert("La quantité saisie n'est pas correct!");
   }

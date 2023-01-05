@@ -91,9 +91,13 @@ function getTotal() {
 function modifyQtt() {
   const quantityInputs = document.querySelectorAll(".itemQuantity");
   quantityInputs.forEach((input) => {
-    input.addEventListener("input", getTotal);
+    input.addEventListener("input", () => {
+      getTotal();
+    });
   });
 }
+
+/* */
 
 function deleteItem() {
   const deleteButtons = document.querySelectorAll(".deleteItem");
@@ -106,7 +110,6 @@ function deleteItem() {
       // TODO HERE: remove the related product in the localstorage
       products = products.filter((prod) => prod._id !== productId);
       // peopleMajorOnly = people.filter((p) => p.age > 18);
-
       //Utilisation de la methode remove()
       cartItem.remove();
       //mettre a jour prix et quantité total en appelant la fonction getTotal
