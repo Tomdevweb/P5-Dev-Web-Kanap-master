@@ -1,9 +1,18 @@
 const storeProducts = (products) => {
+  if (!products) {
+    alert("Attention bug");
+    return;
+  }
   localStorage.setItem("products", JSON.stringify(products));
 };
+
 // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
 const getProducts = () => {
-  return JSON.parse(localStorage.getItem("products") || "[]");
+  const _products = localStorage.getItem("products");
+  if (!_products || _products === "undefined") {
+    return [];
+  }
+  return JSON.parse(_products);
 };
 
 let products = getProducts();
@@ -92,33 +101,38 @@ function modifyQtt() {
   const quantityInputs = document.querySelectorAll(".itemQuantity");
   quantityInputs.forEach((input) => {
     input.addEventListener("input", () => {
+      //products = products.find((prod) => prod._id == productId);
+
       getTotal();
     });
   });
 }
 
-/* */
-
 function deleteItem() {
   const deleteButtons = document.querySelectorAll(".deleteItem");
-
   deleteButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
       const cartItem =
         button.parentElement.parentElement.parentElement.parentElement;
       const productId = cartItem.dataset.id;
-      // TODO HERE: remove the related product in the localstorage
+      //remove the related product in the localstorage
       products = products.filter((prod) => prod._id !== productId);
-      // peopleMajorOnly = people.filter((p) => p.age > 18);
       //Utilisation de la methode remove()
       cartItem.remove();
+      //enregistrement du nouveau panier dans le LS
+      storeProducts(products);
       //mettre a jour prix et quantité total en appelant la fonction getTotal
       getTotal();
       event.preventDefault();
     });
   });
+
+  // getStorageProducts.forEach((_products) => {
+  //   if (_products.id === cartItem.dataset.id) {
+  //     cartItem.remove();
+  //     localStorage.setItem("products", JSON.stringify(_products));
+  //   }
+  // });
 }
 
 displayInfo();
-
-//etape 10 : addeventlistiner sur bouton ne pas oublier le preventdefault !

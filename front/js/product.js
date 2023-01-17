@@ -61,11 +61,21 @@ displayInfo();
 
 //Fonction utilitaire reutilisable
 const storeProducts = (products) => {
+  if (!products) {
+    alert("Attention bug");
+    return;
+  }
+  //"serialisation" JSON.stringigy va transformer mes données complexes tableau/objet en chaine de caractere
   localStorage.setItem("products", JSON.stringify(products));
 };
 // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
 const getProducts = () => {
-  return JSON.parse(localStorage.getItem("products") || "[]");
+  const _products = localStorage.getItem("products");
+  if (!_products || _products === "undefined") {
+    return [];
+  }
+  //JSON.parse va permettre de a nouveau transformer la chaine de caractere en tableau/object
+  return JSON.parse(_products);
 };
 
 const addProductToCart = (productData) => {
