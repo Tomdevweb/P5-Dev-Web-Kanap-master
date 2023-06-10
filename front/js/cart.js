@@ -6,9 +6,9 @@ const storeProducts = (_products) => {
   localStorage.setItem("products", JSON.stringify(_products));
 };
 
-// Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
-const _products = localStorage.getItem("products"); //j'ai déplacé cette variable hors de getProducts pour pouvoir l'utiliser plus bas
 const getProducts = () => {
+  // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
+  const _products = localStorage.getItem("products"); //j'ai déplacé cette variable hors de getProducts pour pouvoir l'utiliser plus bas
   //change _products par _productsInLocalStorage
   if (!_products || _products === "undefined") {
     return [];
@@ -234,7 +234,7 @@ const orderBtn = document.getElementById("order");
 orderBtn.addEventListener("click", (event) => {
   event.preventDefault(); //empêche le rechargement de la page
   //--------------Si le panier est vide, on affiche "Le panier est vide"------------
-  if (_products === null || _products.length === 0) {
+  if (products === null || products.length === 0) {
     alert("Votre panier est vide !");
   } else if (
     // On vérifie que tous les champs sont bien renseignés, sinon on indique un message à l'utilisateur
@@ -248,12 +248,22 @@ orderBtn.addEventListener("click", (event) => {
     alert("Vous devez renseigner tous les champs !");
     event.preventDefault();
   } else {
-    //Récupération des id des produits du panier, dans le localStorage
-    let idProducts = [];
-    for (let i = 0; i < _products.length; i++) {
-      idProducts.push(_products[i].idProduct);
-    }
+    // Récupération des id des produits du panier, dans le localStorage
+    // const idProducts = [];
+    // products.forEach((product) => {
+    //   idProducts.push(product._id);
+    // });
+
+    // Récupération des id des produits du panier, dans le localStorage
+    const idProducts = products.map((product) => product._id);
+
+    console.log("products");
+    console.log(products);
+    console.log("idProducts");
     console.log(idProducts);
+
+    return; // DEBUG HERE
+
     const orderObject = {
       contact: {
         firtName: firstNameInput.value,

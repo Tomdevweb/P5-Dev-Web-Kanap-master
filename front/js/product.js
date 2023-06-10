@@ -19,8 +19,9 @@ async function displayInfo() {
   let product = await getOneProduct(idProduct);
   console.log(product);
 
-  //ajouter la ref de l'id du produit sur le boutton-------------------
+  //ajouter la ref de l'id du produit sur le boutton
   const addToCart = document.getElementById("addToCart");
+  //creation d'une dataset sur le boutton (data-id-product = 12121130130...)
   addToCart.dataset.idProduct = product._id;
 
   //On insert le nom du produit dans la balise avec id "title"
@@ -38,7 +39,7 @@ async function displayInfo() {
   console.log(productDescription);
   productDescription.innerText = product.description;
 
-  //A FAIRE : UTILISER FRAGMENT POUR COLORS ET IMAGES -->
+  //A FAIRE : UTILISER FRAGMENT POUR COLORS ET IMAGES
 
   //On insert les couleurs du produit
   let productColors = document.getElementById("colors");
@@ -62,10 +63,10 @@ displayInfo();
 //Fonction utilitaire reutilisable
 const storeProducts = (products) => {
   if (!products) {
-    alert("Attention bug");
+    alert("Attention!");
     return;
   }
-  //"serialisation" JSON.stringigy va transformer mes données complexes tableau/objet en chaine de caractere
+  //"serialisation" JSON.stringigy va transformer mes données complexes tableau/objet en chaine de caracteres
   localStorage.setItem("products", JSON.stringify(products));
 };
 // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
@@ -74,7 +75,7 @@ const getProducts = () => {
   if (!_products || _products === "undefined") {
     return [];
   }
-  //JSON.parse va permettre de a nouveau transformer la chaine de caractere en tableau/object
+  //JSON.parse transforme la chaine de caractere en tableau/object
   return JSON.parse(_products);
 };
 
@@ -82,10 +83,9 @@ const addProductToCart = (productData) => {
   const productsInLS = getProducts();
   console.log(productsInLS);
 
-  // No products yet
+  // Pas encore de produit
   if (!productsInLS.length) {
-    //console.log("PRODUCTS NEVER STORED => ADD");
-    // Create the array
+    // Créé un array
     const products = [];
     // Add the product to persist in the array
     products.push(productData);
