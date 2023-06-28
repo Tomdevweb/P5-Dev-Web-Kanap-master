@@ -8,12 +8,12 @@ const storeProducts = (_products) => {
 
 const getProducts = () => {
   // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
-  const _products = localStorage.getItem("products"); //j'ai déplacé cette variable hors de getProducts pour pouvoir l'utiliser plus bas
+  const _productsInLocalStorage = localStorage.getItem("products");
   //change _products par _productsInLocalStorage
-  if (!_products || _products === "undefined") {
+  if (!_productsInLocalStorage || _productsInLocalStorage === "undefined") {
     return [];
   }
-  return JSON.parse(_products);
+  return JSON.parse(_productsInLocalStorage);
 };
 
 let products = getProducts();
@@ -80,7 +80,6 @@ function getTotal() {
   let total = 0;
   let totalQtt = 0;
   prices.forEach((e) => {
-    //Le slice supprime l'espace vide et le symbole euro, et le number() va parser mes deux prix
     prix = parseInt(e.textContent);
     article = e.closest("article");
     qteInput = article.querySelector(".itemQuantity");
@@ -95,7 +94,7 @@ function getTotal() {
   const totalQuantity = document.getElementById("totalQuantity");
   totalQuantity.innerHTML = totalQtt;
 }
-//fonction qui modifie la quantité et le prix total quand l'utilisateur modifie la quantité
+// modifie la quantité et le prix total quand l'utilisateur modifie la quantité
 function modifyQtt() {
   const quantityInputs = document.querySelectorAll(".itemQuantity");
   quantityInputs.forEach((input) => {
@@ -103,19 +102,10 @@ function modifyQtt() {
       const newQuantity = event.target.value;
       getTotal();
       const cartItem = input.parentElement.parentElement.parentElement.parentElement;
-
       const productId = cartItem.dataset.id;
 
       let foundProduct = products.find((prod) => prod._id == productId);
       foundProduct.quantity = newQuantity; // update quantity (mutation) TODO à rechercher
-
-      // const newProducts = products.map((p) => {
-      //   const isTheOne = p._id === productId;
-      //   if (isTheOne) {
-      //     p.quantity = newQuantity;
-      //   }
-      //   return p;
-      // });
 
       storeProducts(products);
     });
@@ -136,24 +126,17 @@ function deleteItem() {
       storeProducts(products);
       //mettre a jour prix et quantité total en appelant la fonction getTotal
       getTotal();
-      event.preventDefault();
+      event.preventDefault(); //empeche de recharger la page
     });
   });
-
-  // getStorageProducts.forEach((_products) => {
-  //   if (_products.id === cartItem.dataset.id) {
-  //     cartItem.remove();
-  //     localStorage.setItem("products", JSON.stringify(_products));
-  //   }
-  // });
 }
 displayInfo();
 
 // ----------------------------------------------------------------------------------------------------------
-// PASSER LA COMMANDE (Contrôle infos formulaire + récupération des données)
+// PASSER LA COMMANDE (Contrôle infos formulaire)
 // ----------------------------------------------------------------------------------------------------------
 
-//Expressions régulières (dois-je utiliser new regExp() ?)
+//Expressions régulières
 let onlyLettersExpressions = /^[a-zA-ZäöüßÄÖÜÏâêéôûîÂÔÛÎÉ]+$/;
 let noSpecialExpressions = /^\d+\s[A-z]+\s[A-z]+/;
 let regularExpressions =
@@ -227,18 +210,19 @@ emailInput.addEventListener("change", () => {
   return false;
 });
 
-//------------------Gestion formulaire contact et validation de la commande-------------------
-
+//---------------------------------------------------------------------------------------------------------
+// GESTION FORMULAIRE ET VALIDATION COMMANDE
+//---------------------------------------------------------------------------------------------------------
 const orderBtn = document.getElementById("order");
 
 orderBtn.addEventListener("click", (event) => {
   event.preventDefault(); //empêche le rechargement de la page
-  //--------------Si le panier est vide, on affiche "Le panier est vide"------------
+
+  // Si le panier est vide
   if (products === null || products.length === 0) {
     alert("Votre panier est vide !");
   } else if (
-    // On vérifie que tous les champs sont bien renseignés, sinon on indique un message à l'utilisateur
-    // On vérifie qu'aucun champ n'est vide
+    // On vérifie que tous les champs sont bien renseignés, sinon on indique un message à l'utilisateur (On vérifie qu'aucun champ n'est vide)
     !firstNameInput.value ||
     !lastNameInput.value ||
     !addressInput.value ||
@@ -249,21 +233,12 @@ orderBtn.addEventListener("click", (event) => {
     event.preventDefault();
   } else {
     // Récupération des id des produits du panier, dans le localStorage
-    // const idProducts = [];
-    // products.forEach((product) => {
-    //   idProducts.push(product._id);
-    // });
-
-    // Récupération des id des produits du panier, dans le localStorage
     const idProducts = products.map((product) => product._id);
-
-    console.log("products");
-    console.log(products);
-    console.log("idProducts");
-    console.log(idProducts);
-
-    return; // DEBUG HERE
-
+    //console.log("products");
+    //console.log(products);
+    //console.log("idProducts");
+    //console.log(idProducts);
+    //return; // DEBUG
     const orderObject = {
       contact: {
         firtName: firstNameInput.value,
@@ -275,6 +250,7 @@ orderBtn.addEventListener("click", (event) => {
       products: idProducts,
     };
     console.log(order);
+
     // On indique la méthode d'envoi des données
     const options = {
       method: "POST",
@@ -284,29 +260,19 @@ orderBtn.addEventListener("click", (event) => {
       },
       body: JSON.stringify(orderObject),
     };
-    //console.log(options);
-    // on envoie les données Contact et l'id des produits à l'API
 
+    // on envoie les données Contact et l'id des produits à l'API
     fetch("http://localhost:3000/api/products/order", options)
       .then((response) => response.json())
       .then((data) => {
-        //console.log(data);
         // on redirige vers la page de confirmation de commande en passant l'orderId (numéro de commande) dans l'URL
         document.location.href = `confirmation.html?orderId=${data.orderId}`;
       })
-
       .catch((err) => {
         console.log("Erreur Fetch product.js", err);
         alert("Un problème a été rencontré lors de l'envoi du formulaire.");
       });
-    //----------------------------------------------On vide le localStorage---------------------------------------------------------------
+    //On vide le localStorage
     localStorage.clear();
-  } //fin else
-}); //fin écoute bouton Commander
-
-// async function getOrderedProducts() {
-//   const response = await fetch("http://localhost:3000/api/products/" + id);
-//   if (response.ok) {
-//     return response.json();
-//   }
-// }
+  }
+});

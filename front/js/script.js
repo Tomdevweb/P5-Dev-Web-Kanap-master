@@ -1,10 +1,7 @@
-/*fetch ('http://localhost:3000/api/products')
-    .then(res => console.log(res))*/
-
 //------------------------------------------------------------------------
 // Récupération des produits de l'api
 //------------------------------------------------------------------------
-// On créé la fonction qui appel l'API
+// On créé la fonction qui appelle l'API
 //On utilise async/await qui nous permet d'attendre le resultat de la fonction avant d'éxécuter le reste du code
 async function getProducts() {
   const response = await fetch("http://localhost:3000/api/products");
@@ -20,7 +17,7 @@ async function getProducts() {
 // Affichage des produits de l'api sur la page index
 //----------------------------------------------------------------------
 
-//Fonction qui appel les produits
+//Fonction qui appelle les produits
 async function displayProducts() {
   //Appel de l'api (fonction du haut)
   const products = await getProducts();

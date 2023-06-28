@@ -15,36 +15,35 @@ async function getOneProduct(id) {
 }
 //On appel les infos de chaque produits par l'Id
 async function displayInfo() {
-  let idProduct = getUrlParams("id");
+  let idProduct = getUrlParams("id"); // choppe la valeur id dans l'url
   let product = await getOneProduct(idProduct);
   console.log(product);
 
-  //ajouter la ref de l'id du produit sur le boutton
+  // ajouter la ref de l'id du produit sur le boutton
   const addToCart = document.getElementById("addToCart");
-  //creation d'une dataset sur le boutton (data-id-product = 12121130130...)
+  // creation d'une dataset sur le boutton (data-id-product = id du produit)
   addToCart.dataset.idProduct = product._id;
 
-  //On insert le nom du produit dans la balise avec id "title"
+  // On insert le nom du produit dans la balise avec id "title"
   let productTitle = document.getElementById("title");
   console.log(productTitle);
   productTitle.innerText = product.name;
 
-  //On insert le prix du produit dans la balise avec id "price"
+  // On insert le prix du produit dans la balise avec id "price"
   let productPrice = document.getElementById("price");
   console.log(productPrice);
   productPrice.innerText = product.price;
 
-  //On insert la description du produit dans la balise avec id "description"
+  // On insert la description du produit dans la balise avec id "description"
   let productDescription = document.getElementById("description");
   console.log(productDescription);
   productDescription.innerText = product.description;
 
-  //A FAIRE : UTILISER FRAGMENT POUR COLORS ET IMAGES
+  // OPTIONNEL A FAIRE : UTILISER FRAGMENT POUR COLORS ET IMAGES
 
-  //On insert les couleurs du produit
+  // On insert les couleurs du produit
   let productColors = document.getElementById("colors");
-  productColors.innerText = product.colors;
-  //On creer une boucle car plusieurs choix de couleurs
+  // On creer une boucle car plusieurs choix de couleurs
   for (let color of product.colors) {
     productColors.innerHTML += `<option value="${color}">${color}</option>`;
   }
@@ -66,7 +65,7 @@ const storeProducts = (products) => {
     alert("Attention!");
     return;
   }
-  //"serialisation" JSON.stringigy va transformer mes données complexes tableau/objet en chaine de caracteres
+  //serialisation JSON.stringify va transformer mes données complexes tableau/objet en chaine de caracteres
   localStorage.setItem("products", JSON.stringify(products));
 };
 // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
@@ -83,16 +82,16 @@ const addProductToCart = (productData) => {
   const productsInLS = getProducts();
   console.log(productsInLS);
 
-  // Pas encore de produit
+  // Si pas encore de produit
   if (!productsInLS.length) {
     // Créé un array
     const products = [];
-    // Add the product to persist in the array
+    // Ajout du produit et persist dans l'array
     products.push(productData);
-    // Persist the array
+    // Persiste l'array
     storeProducts(products);
   }
-  // Products already stored in LS
+  // Produit deja stocké dans le LS
   else {
     const productWithSameIdAndColor = productsInLS.find((_prod) => {
       const sameId = _prod._id === productData._id;
@@ -101,7 +100,7 @@ const addProductToCart = (productData) => {
       return isSameIdAndColor;
     });
     if (productWithSameIdAndColor) {
-      //console.log("PRODUCT ALREADY STORED BUT SAME COLOR => INCREMENT");
+      //console.log("Produit deja stocké dans LS mais meme couleur = incrémente");
       let newValue = productWithSameIdAndColor.quantity + productData.quantity;
       if (newValue < 101) {
         productWithSameIdAndColor.quantity += productData.quantity; // Increment quantity
@@ -110,7 +109,7 @@ const addProductToCart = (productData) => {
         alert("la quantité max ne peut pas dépassé 100");
       }
     } else {
-      //console.log("PRODUCT NOT PRESENT IN STORAGE => ADD");
+      //console.log("produit pas stocké dans LS => ajout du produit");
       productsInLS.push(productData);
       storeProducts(productsInLS);
     }
@@ -118,18 +117,18 @@ const addProductToCart = (productData) => {
 };
 
 addToCart.addEventListener("click", (event) => {
-  // Retrieve the product id
+  // Retrouve l'id du produit
   const productId = event.target.getAttribute("data-id-product");
-  //parseInt = converti un string en chiffre (si possible)
+  //parseInt = converti un string en chiffre
   const itemsQuantity = parseInt(document.getElementById("quantity").value);
   if (itemsQuantity > 0 && itemsQuantity < 101) {
     alert("Le produit a bien été ajouté au panier");
   } else {
     return alert("La quantité saisie n'est pas correct!");
   }
-  // Get the selected color
+  // Choppe la couleur selectionnée
   const color = document.getElementById("colors").value;
-  // Save in local storage
+  // Sauvegarde dans LS
   const productData = {
     _id: productId,
     quantity: itemsQuantity,
@@ -137,22 +136,3 @@ addToCart.addEventListener("click", (event) => {
   };
   addProductToCart(productData);
 });
-
-//COMMENT ADRIEN : faire une fonction pour gerer le local storage, qui prend en paramettre un objet produit contenant id/color/qte
-/*
-
-recupéré le localstorage
-tester si il est vide ou pas
-
-si vide: on créer une nouvelle liste, on met le produit et on enregistre le LS
-sinon:
-  on fait un foreach sur le panier
-  si id + color identique, on incremente la qte et ont renvoie la liste sur le LS
-  si on ne toruve pas l'article, on le rajoute dans la liste qu'on envoie ensuite au LS
-
-fonction utile
-
-push()
-json.parse()
-json.stringify()
-*/
