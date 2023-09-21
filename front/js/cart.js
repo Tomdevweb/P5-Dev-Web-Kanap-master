@@ -1,57 +1,52 @@
 const storeProducts = (_products) => {
   if (!_products) {
-    alert("Attention");
+    alert("Attention, pas de produits stockés!");
     return;
   }
   localStorage.setItem("products", JSON.stringify(_products));
 };
 
-const getProducts = () => {
-  // Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
-  const _productsInLocalStorage = localStorage.getItem("products");
-  //change _products par _productsInLocalStorage
-  if (!_productsInLocalStorage || _productsInLocalStorage === "undefined") {
+// Retrouve produits déjà dans LS. Si aucun, renvoie tableau vide
+const getStoredProducts = () => {
+  const productsInLocalStorage = localStorage.getItem("products");
+  if (!productsInLocalStorage || productsInLocalStorage === "undefined") {
     return [];
   }
-  return JSON.parse(_productsInLocalStorage);
+  return JSON.parse(productsInLocalStorage);
 };
 
-let products = getProducts();
+let products = getStoredProducts();
 
 async function getOneProduct(id) {
-  const response = await fetch("http://localhost:3000/api/products/" + id);
-  if (response.ok) {
+  try {
+    const response = await fetch("http://localhost:3000/api/products/" + id);
     return response.json();
-  } else {
-    console.log(response.error);
+  } catch (error) {
+    console.log(error);
   }
 }
 
 async function displayInfo() {
-  // récupération de la balise ou on va mettre les données final
-  const cartItems = document.getElementById("cart__items");
-  // création du fragment
+  const itemsContainer = document.getElementById("cart__items");
   const fragment = new DocumentFragment();
 
   for await (product of products) {
-    console.log(product);
-    //On enregistre les infos du produit actuel de la boucle dans une variable, via un appel a l'api
-    const productInfo = await getOneProduct(product._id);
+    // Enregistre infos du produit dans une variable, via appel a l'api
+    const productInfos = await getOneProduct(product._id);
 
-    //creation de la balise article
     let article = document.createElement("article");
     article.classList.add("cart__item");
     article.dataset.id = product._id;
 
     article.innerHTML = `
     <div class="cart__item__img">
-      <img src="${productInfo.imageUrl}" alt="Photographie d'un canapé">
+      <img src="${productInfos.imageUrl}" alt="${productInfos.altTxt}">
     </div>
     <div class="cart__item__content">
       <div class="cart__item__content__description">
-        <h2>${productInfo.name}</h2>
+        <h2>${productInfos.name}</h2>
         <p>${product.color}</p>
-        <p>${productInfo.price} €</p>
+        <p>${productInfos.price} €</p>
       </div>
       <div class="cart__item__content__settings">
         <div class="cart__item__content__settings__quantity">
@@ -66,46 +61,45 @@ async function displayInfo() {
 `;
     fragment.appendChild(article);
   }
-  //ajout du fragment sur la page
-  cartItems.appendChild(fragment);
+  itemsContainer.appendChild(fragment);
   getTotal();
   modifyQtt();
   deleteItem();
 }
 
 function getTotal() {
-  //Get la balise p prix
   const prices = document.querySelectorAll(".cart__item__content__description p:nth-child(3)");
-  //addition des prix
   let total = 0;
   let totalQtt = 0;
+
   prices.forEach((e) => {
-    prix = parseInt(e.textContent);
-    article = e.closest("article");
-    qteInput = article.querySelector(".itemQuantity");
+    const price = parseInt(e.textContent);
+    const article = e.closest("article");
+    const qteInput = article.querySelector(".itemQuantity");
     const qteInputValue = qteInput.value || 0;
-    total += prix * qteInputValue;
+    total += price * qteInputValue;
     totalQtt += parseInt(qteInputValue);
   });
-  //ajout prix total dans le DOM
+
   const totalPrices = document.getElementById("totalPrice");
   totalPrices.innerHTML = total;
-  //ajout quantité totale dans le DOM
+
   const totalQuantity = document.getElementById("totalQuantity");
   totalQuantity.innerHTML = totalQtt;
 }
-// modifie la quantité et le prix total quand l'utilisateur modifie la quantité
+
+// Modifie quantité et prix total quand l'utilisateur modifie la quantité
 function modifyQtt() {
   const quantityInputs = document.querySelectorAll(".itemQuantity");
   quantityInputs.forEach((input) => {
     input.addEventListener("change", (event) => {
       const newQuantity = event.target.value;
       getTotal();
-      const cartItem = input.parentElement.parentElement.parentElement.parentElement;
+      const cartItem = input.closest(".cart__item");
       const productId = cartItem.dataset.id;
 
       let foundProduct = products.find((prod) => prod._id == productId);
-      foundProduct.quantity = newQuantity; // update quantity (mutation) TODO à rechercher
+      foundProduct.quantity = newQuantity;
 
       storeProducts(products);
     });
@@ -114,62 +108,61 @@ function modifyQtt() {
 
 function deleteItem() {
   const deleteButtons = document.querySelectorAll(".deleteItem");
+
   deleteButtons.forEach((button) => {
     button.addEventListener("click", (event) => {
-      const cartItem = button.parentElement.parentElement.parentElement.parentElement;
+      const cartItem = button.closest(".cart__item");
       const productId = cartItem.dataset.id;
-      //remove the related product in the localstorage
+
       products = products.filter((prod) => prod._id !== productId);
-      //Utilisation de la methode remove()
       cartItem.remove();
+
       //enregistrement du nouveau panier dans le LS
       storeProducts(products);
-      //mettre a jour prix et quantité total en appelant la fonction getTotal
+      // Mise à jour prix et quantité totale
       getTotal();
-      event.preventDefault(); //empeche de recharger la page
+      event.preventDefault();
     });
   });
 }
 displayInfo();
 
-// ----------------------------------------------------------------------------------------------------------
-// PASSER LA COMMANDE (Contrôle infos formulaire)
-// ----------------------------------------------------------------------------------------------------------
+// Passer la commande (Contrôle infos formulaire)
 
-//Expressions régulières
-let onlyLettersExpressions = /^[a-zA-ZäöüßÄÖÜÏâêéôûîÂÔÛÎÉ]+$/;
-let noSpecialExpressions = /^\d+\s[A-z]+\s[A-z]+/;
-let regularExpressions =
-  /^(([^<>()[]\.,;:s@]+(.[^<>()[]\.,;:s@]+)*)|(.+))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/;
+const onlyLettersExpressions = /^[a-zA-ZäöüßÄÖÜÏâêéôûîÂÔÛÎÉ-]+$/;
+const noSpecialExpressions = /^\d+\s[A-z]+\s[A-z]+/;
+const regularExpressions = /^(([^<>()[]\.,;:s@]+(.[^<>()[]\.,;:s@]+)*)|(.+))@(([[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}])|(([a-zA-Z-0-9]+.)+[a-zA-Z]{2,}))$/;
 
-//Récupération des differents input
-let firstNameInput = document.getElementById("firstName");
-let lastNameInput = document.getElementById("lastName");
-let addressInput = document.getElementById("address");
-let cityInput = document.getElementById("city");
-let emailInput = document.getElementById("email");
+const firstNameInput = document.getElementById("firstName");
+const lastNameInput = document.getElementById("lastName");
+const addressInput = document.getElementById("address");
+const cityInput = document.getElementById("city");
+const emailInput = document.getElementById("email");
 
-//Vérification du Prénom
+const firstNameMsg = document.getElementById("firstNameErrorMsg");
+const lastNameMsg = document.getElementById("lastNameErrorMsg");
+const addressMsg = document.getElementById("addressErrorMsg");
+const cityMsg = document.getElementById("cityErrorMsg");
+const emailMsg = document.getElementById("emailErrorMsg");
+
 firstNameInput.addEventListener("change", () => {
-  if (onlyLettersExpressions.test(firstNameInput.value)) {
-    document.getElementById("firstNameErrorMsg").innerHTML = `Le Prénom est valide`;
-    document.getElementById("firstNameErrorMsg").style.color = "green";
-    document.getElementById("firstName").style.color = "#A3EBDD";
+  if (onlyLettersExpressions.test(firstNameInput.value.trim())) {
+    firstNameMsg.textContent = "Le prénom est valide";
+    firstNameMsg.style.color = "lightgreen";
   } else {
-    document.getElementById("firstNameErrorMsg").innerHTML = `Le Prénom n'est pas valide`;
-    document.getElementById("firstNameErrorMsg").style.color = "red";
+    firstNameMsg.textContent = "Le prénom n'est pas valide!";
+    firstNameMsg.style.color = "red";
   }
   return false;
 });
 
-//Vérification du Nom(pas de chiffre et caracteres spéciaux)
 lastNameInput.addEventListener("change", () => {
-  if (onlyLettersExpressions.test(lastNameInput.value)) {
-    document.getElementById("lastNameErrorMsg").innerHTML = `Le Nom est valide`;
-    document.getElementById("lastNameErrorMsg").style.color = "green";
+  if (onlyLettersExpressions.test(lastNameInput.value.trim())) {
+    lastNameMsg.textContent = "Le nom est valide";
+    lastNameMsg.style.color = "lightgreen";
   } else {
-    document.getElementById("lastNameErrorMsg").innerHTML = `Le Nom n'est pas valide`;
-    document.getElementById("lastNameErrorMsg").style.color = "red";
+    lastNameMsg.textContent = "Le nom n'est pas valide!";
+    lastNameMsg.style.color = "red";
   }
   return false;
 });
@@ -177,68 +170,63 @@ lastNameInput.addEventListener("change", () => {
 //Vérification addresse (pas de caracteres speciaux)
 addressInput.addEventListener("change", () => {
   if (noSpecialExpressions.test(addressInput.value)) {
-    document.getElementById("addressErrorMsg").innerHTML = `L'addresse est valide`;
-    document.getElementById("addressErrorMsg").style.color = "green";
+    addressMsg.textContent = "L'adresse est valide";
+    addressMsg.style.color = "lightgreen";
   } else {
-    document.getElementById("addressErrorMsg").innerHTML = `L'addresse n'est pas valide`;
-    document.getElementById("addressErrorMsg").style.color = "red";
+    addressMsg.textContent = "L'adresse n'est pas valide!";
+    addressMsg.style.color = "red";
   }
   return false;
 });
 
-//Vérification addresse
 cityInput.addEventListener("change", () => {
-  if (onlyLettersExpressions.test(cityInput.value)) {
-    document.getElementById("cityErrorMsg").innerHTML = `La ville est valide`;
-    document.getElementById("cityErrorMsg").style.color = "green";
+  if (onlyLettersExpressions.test(cityInput.value.trim())) {
+    cityMsg.textContent = "La ville est valide";
+    cityMsg.style.color = "lightgreen";
   } else {
-    document.getElementById("cityErrorMsg").innerHTML = `La ville n'est pas valide`;
-    document.getElementById("cityErrorMsg").style.color = "red";
+    cityMsg.textContent = "La ville n'est pas valide!";
+    cityMsg.style.color = "red";
   }
   return false;
 });
 
-//Vérification e-mail
 emailInput.addEventListener("change", () => {
-  if (regularExpressions.test(emailInput.value)) {
-    document.getElementById("emailErrorMsg").innerHTML = `L'adresse mail est valide`;
-    document.getElementById("emailErrorMsg").style.color = "green";
+  if (regularExpressions.test(emailInput.value.trim())) {
+    emailMsg.textContent = "L'adresse email est valide";
+    emailMsg.style.color = "lightgreen";
   } else {
-    document.getElementById("emailErrorMsg").innerHTML = `L'adresse mail n'est pas valide`;
-    document.getElementById("emailErrorMsg").style.color = "red";
+    emailMsg.textContent = "L'adresse email n'est pas valide!";
+    emailMsg.style.color = "red";
   }
   return false;
 });
 
-//---------------------------------------------------------------------------------------------------------
-// GESTION FORMULAIRE ET VALIDATION COMMANDE
-//---------------------------------------------------------------------------------------------------------
+// Gestion formulaire et validation commande
 const orderBtn = document.getElementById("order");
 
 orderBtn.addEventListener("click", (event) => {
-  event.preventDefault(); //empêche le rechargement de la page
+  event.preventDefault();
 
-  // Si le panier est vide
-  if (products === null || products.length === 0) {
+  const quantityInputs = Array.from(document.querySelectorAll(".itemQuantity")); //Convertion en tableau car NodeList n'a pas les methodes d'un tableau
+  const isIncorrectQuantity = quantityInputs.find((input) => input.value <= 0 || input.value > 100);
+
+  const isMissingInputs = !firstNameInput.value || !lastNameInput.value || !addressInput.value || !cityInput.value || !emailInput.value;
+
+  const formMessages = [firstNameMsg, lastNameMsg, addressMsg, cityMsg, emailMsg];
+  const incorrectInput = formMessages.find((msg) => msg.style.color === "red");
+
+  if (isIncorrectQuantity) {
+    alert("La quantité saisie n'est pas correct! Veuillez choisir une quantité entre 1 et 100.");
+  } else if (products === null || products.length === 0) {
     alert("Votre panier est vide !");
-  } else if (
-    // On vérifie que tous les champs sont bien renseignés, sinon on indique un message à l'utilisateur (On vérifie qu'aucun champ n'est vide)
-    !firstNameInput.value ||
-    !lastNameInput.value ||
-    !addressInput.value ||
-    !cityInput.value ||
-    !emailInput.value
-  ) {
+  } else if (isMissingInputs) {
     alert("Vous devez renseigner tous les champs !");
-    event.preventDefault();
+  } else if (incorrectInput) {
+    alert("Un ou plusieurs champs sont invalides!");
   } else {
-    // Récupération des id des produits du panier, dans le localStorage
+    // Récupération id des produits du panier, dans le localStorage
     const idProducts = products.map((product) => product._id);
-    //console.log("products");
-    //console.log(products);
-    //console.log("idProducts");
-    //console.log(idProducts);
-    //return; // DEBUG
+
     const orderObject = {
       contact: {
         firtName: firstNameInput.value,
@@ -249,9 +237,8 @@ orderBtn.addEventListener("click", (event) => {
       },
       products: idProducts,
     };
-    console.log(order);
 
-    // On indique la méthode d'envoi des données
+    // Indique la méthode d'envoi des données
     const options = {
       method: "POST",
       headers: {
@@ -261,18 +248,18 @@ orderBtn.addEventListener("click", (event) => {
       body: JSON.stringify(orderObject),
     };
 
-    // on envoie les données Contact et l'id des produits à l'API
+    // Envoie des données contact et id des produits à l'API
     fetch("http://localhost:3000/api/products/order", options)
       .then((response) => response.json())
       .then((data) => {
-        // on redirige vers la page de confirmation de commande en passant l'orderId (numéro de commande) dans l'URL
+        // Redirection vers page de confirmation en passant l'orderId dans l'URL
         document.location.href = `confirmation.html?orderId=${data.orderId}`;
       })
       .catch((err) => {
         console.log("Erreur Fetch product.js", err);
         alert("Un problème a été rencontré lors de l'envoi du formulaire.");
       });
-    //On vide le localStorage
+    // Vide le localStorage
     localStorage.clear();
   }
 });

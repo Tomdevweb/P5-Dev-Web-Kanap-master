@@ -1,75 +1,57 @@
-//récupération de l'id du produit via l'URL
+// Récupération de l'id du produit via l'URL
 function getUrlParams(param) {
   let url = new URL(window.location.href);
   return url.searchParams.get(param);
 }
 
-//On rappel l'API mais cette fois par produit
+// Rappel de l'API par produit
 async function getOneProduct(id) {
-  const response = await fetch("http://localhost:3000/api/products/" + id);
-  if (response.ok) {
+  try {
+    const response = await fetch("http://localhost:3000/api/products/" + id);
     return response.json();
-  } else {
-    console.log(response.error);
+  } catch (error) {
+    console.log(error);
   }
 }
-//On appel les infos de chaque produits par l'Id
+// Appel infos chaque produit par l'id + affichage
 async function displayInfo() {
-  let idProduct = getUrlParams("id"); // choppe la valeur id dans l'url
+  let idProduct = getUrlParams("id");
   let product = await getOneProduct(idProduct);
-  console.log(product);
 
-  // ajouter la ref de l'id du produit sur le boutton
+  // Creation dataset sur le boutton (data-id-product = id du produit)
   const addToCart = document.getElementById("addToCart");
-  // creation d'une dataset sur le boutton (data-id-product = id du produit)
   addToCart.dataset.idProduct = product._id;
 
-  // On insert le nom du produit dans la balise avec id "title"
   let productTitle = document.getElementById("title");
-  console.log(productTitle);
   productTitle.innerText = product.name;
 
-  // On insert le prix du produit dans la balise avec id "price"
   let productPrice = document.getElementById("price");
-  console.log(productPrice);
   productPrice.innerText = product.price;
 
-  // On insert la description du produit dans la balise avec id "description"
   let productDescription = document.getElementById("description");
-  console.log(productDescription);
   productDescription.innerText = product.description;
 
-  // OPTIONNEL A FAIRE : UTILISER FRAGMENT POUR COLORS ET IMAGES
-
-  // On insert les couleurs du produit
   let productColors = document.getElementById("colors");
-  // On creer une boucle car plusieurs choix de couleurs
   for (let color of product.colors) {
     productColors.innerHTML += `<option value="${color}">${color}</option>`;
   }
 
-  //On insert l'image + balise img dans la div (vu chez github du mec)
   let imageAlt = document.querySelector(".item__img");
   imageAlt.innerHTML = `<img src="${product.imageUrl}" alt="${product.altTxt}">`;
 }
-
 displayInfo();
 
-// ----------------------------------------------------------
-// Condition de validation du clic bouton ajouter au panier
-// ----------------------------------------------------------
-
-//Fonction utilitaire reutilisable
+//Fonction utilitaire
 const storeProducts = (products) => {
   if (!products) {
-    alert("Attention!");
+    alert("Attention, pas de produits stockés!");
     return;
   }
-  //serialisation JSON.stringify va transformer mes données complexes tableau/objet en chaine de caracteres
   localStorage.setItem("products", JSON.stringify(products));
 };
-// Retrouver les produits déjà persistés en localStorage. Renvoie un tableau vide si il ne trouve rien
-const getProducts = () => {
+
+// Retrouve les produits déjà persistés en LS. Renvoie tableau vide si ne trouve rien
+const getStoredProduct = () => {
   const _products = localStorage.getItem("products");
   if (!_products || _products === "undefined") {
     return [];
@@ -79,59 +61,55 @@ const getProducts = () => {
 };
 
 const addProductToCart = (productData) => {
-  const productsInLS = getProducts();
-  console.log(productsInLS);
+  const productStored = getStoredProduct();
 
   // Si pas encore de produit
-  if (!productsInLS.length) {
-    // Créé un array
+  if (!productStored.length) {
     const products = [];
-    // Ajout du produit et persist dans l'array
     products.push(productData);
-    // Persiste l'array
     storeProducts(products);
   }
-  // Produit deja stocké dans le LS
+  // Produit deja stocké
   else {
-    const productWithSameIdAndColor = productsInLS.find((_prod) => {
+    const productWithSameIdAndColor = productStored.find((_prod) => {
       const sameId = _prod._id === productData._id;
       const sameColor = _prod.color === productData.color;
       const isSameIdAndColor = sameId && sameColor;
       return isSameIdAndColor;
     });
     if (productWithSameIdAndColor) {
-      //console.log("Produit deja stocké dans LS mais meme couleur = incrémente");
       let newValue = productWithSameIdAndColor.quantity + productData.quantity;
       if (newValue < 101) {
-        productWithSameIdAndColor.quantity += productData.quantity; // Increment quantity
-        storeProducts(productsInLS);
+        productWithSameIdAndColor.quantity += productData.quantity;
+        storeProducts(productStored);
       } else {
         alert("la quantité max ne peut pas dépassé 100");
       }
     } else {
-      //console.log("produit pas stocké dans LS => ajout du produit");
-      productsInLS.push(productData);
-      storeProducts(productsInLS);
+      //produit pas stocké => ajout du produit
+      productStored.push(productData);
+      storeProducts(productStored);
     }
   }
 };
 
 addToCart.addEventListener("click", (event) => {
-  // Retrouve l'id du produit
   const productId = event.target.getAttribute("data-id-product");
-  //parseInt = converti un string en chiffre
-  const itemsQuantity = parseInt(document.getElementById("quantity").value);
-  if (itemsQuantity > 0 && itemsQuantity < 101) {
-    alert("Le produit a bien été ajouté au panier");
-  } else {
-    return alert("La quantité saisie n'est pas correct!");
-  }
-  // Choppe la couleur selectionnée
+  const itemQuantity = parseInt(document.getElementById("quantity").value);
   const color = document.getElementById("colors").value;
+
+  if (itemQuantity <= 0 || itemQuantity > 100) {
+    return alert("La quantité saisie n'est pas correct! Veuillez choisir une quantité entre 1 et 100.");
+  } else if (color === "") {
+    return alert("Veuillez choisir une couleur!");
+  } else {
+    alert("Le produit a bien été ajouté au panier!");
+  }
+
   // Sauvegarde dans LS
   const productData = {
     _id: productId,
-    quantity: itemsQuantity,
+    quantity: itemQuantity,
     color: color,
   };
   addProductToCart(productData);

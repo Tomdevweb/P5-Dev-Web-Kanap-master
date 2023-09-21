@@ -1,14 +1,14 @@
-// On récupère la valeur du param 'orderId' de l'URL
+// Récupère param 'orderId' de l'URL
 let urlOrderId = new URLSearchParams(window.location.search).get("orderId");
 
-//S'il n'y a pas d'orderId dans l'URL alors on redirige sur la page d'accueil du site
+//Redirige sur page d'accueil si pas d'orderId
 if (urlOrderId === null || urlOrderId === "") {
   alert("Une erreur s'est produite lors de la validation de votre commande. Veuillez nous en excuser !");
   window.location.href = "index.html";
 }
-//Sinon, on affiche la confirmation de la commande et le numéro de commande
+//Sinon, affiche confirmation de commande et numéro de commande
 else {
-  // Vérifie si le numéro de commande est déjà stocké dans le stockage local
+  // Vérifie si numéro de commande est déjà dans LS
   let storedOrderId = localStorage.getItem("orderId");
 
   if (storedOrderId) {
@@ -20,15 +20,12 @@ else {
     localStorage.setItem("orderId", urlOrderId);
   }
 
-  // Met à jour l'URL avec le numéro de commande
+  // Mise à jour l'URL avec numéro de commande
   const urlParams = new URLSearchParams(window.location.search);
   urlParams.set("orderId", urlOrderId);
   const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
   window.history.replaceState(null, "", newUrl);
 
-  // Sélection de l'élément html dans lequel on veut afficher le numéro de commande
   const idCommande = document.getElementById("orderId");
-  // On insère le numéro de commande dans le html
   idCommande.innerText = urlOrderId;
-  console.log(idCommande);
 }

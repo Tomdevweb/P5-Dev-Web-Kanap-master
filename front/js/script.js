@@ -1,33 +1,22 @@
-//------------------------------------------------------------------------
 // Récupération des produits de l'api
-//------------------------------------------------------------------------
-// On créé la fonction qui appelle l'API
-//On utilise async/await qui nous permet d'attendre le resultat de la fonction avant d'éxécuter le reste du code
 async function getProducts() {
-  const response = await fetch("http://localhost:3000/api/products");
-  //Si ok le navigateur nous retourne le fichier json, sinon il renvoie une erreur
-  if (response.ok) {
+  try {
+    const response = await fetch("http://localhost:3000/api/products");
     return response.json();
-  } else {
-    console.log(response.error); // ou utiliser method catch
+  } catch (error) {
+    console.log(error);
   }
 }
 
-//----------------------------------------------------------------------
-// Affichage des produits de l'api sur la page index
-//----------------------------------------------------------------------
+// Affichage des produits
 
-//Fonction qui appelle les produits
 async function displayProducts() {
-  //Appel de l'api (fonction du haut)
   const products = await getProducts();
-  //Appel de la section
   const target = document.getElementById("items");
 
-  //fragment = une "box" provisoire, pour eviter une exécution 1 puis 1.2 puis 1.2.3 / mais plutot 1.2.3 direct
   const fragment = new DocumentFragment();
   ("");
-  //Pour chaque produits compris dans la list products
+
   products.forEach((product) => {
     let link = document.createElement("a");
     link.href = `./product.html?id=${product._id}`;
@@ -40,5 +29,5 @@ async function displayProducts() {
   });
   target.appendChild(fragment);
 }
-//On appel la fonction produits
+
 displayProducts();
